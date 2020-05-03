@@ -20,12 +20,15 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-# If modifying these scopes, delete the file token.pickle.
+CREDENTIALS_FILENAME = 'credentials.json'
+TOKEN_FILENAME = 'token.pickle'
+
 PORT = 49555
 ORDER_BY = "sharedWithMeTime desc"
 PAGESIZE = 100
 QUERY = "sharedWithMe"
 FIELDS = ["id", "name", "mimeType", "webViewLink", "createdTime", "modifiedTime", "sharedWithMeTime", "sharingUser", "owners"]
+# If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 
 
@@ -36,8 +39,8 @@ def main():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists(TOKEN_FILENAME):
+        with open(TOKEN_FILENAME, 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -45,10 +48,10 @@ def main():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                CREDENTIALS_FILENAME, SCOPES)
             creds = flow.run_local_server(port=PORT)
         # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
+        with open(TOKEN_FILENAME, 'wb') as token:
             pickle.dump(creds, token)
 
     service = build('drive', 'v3', credentials=creds)
@@ -77,4 +80,3 @@ def list_files(results):
 
 if __name__ == '__main__':
     main()
-# [END drive_quickstart]

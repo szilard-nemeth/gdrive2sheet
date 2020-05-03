@@ -38,16 +38,18 @@ def main():
     creds = authorize()
 
     service = build('drive', 'v3', credentials=creds)
-    files = service.files()
+    files_service = service.files()
+
+    fields = get_field_names()
+    list_files_with_paging(files_service, QUERY, PAGESIZE, fields, ORDER_BY)
+
+
+def get_field_names():
     # File fields are documented here: https://developers.google.com/drive/api/v3/reference/files#resource
     fields_str = ", ".join(FIELDS)
     file_fields = "files(" + fields_str + ")"
     fields = "nextPageToken, " + file_fields
-    request = files.list(q=QUERY, pageSize=PAGESIZE, fields=fields, orderBy=ORDER_BY)
-    while request is not None:
-        files_doc = request.execute()
-        list_files(files_doc)
-        request = files.list_next(request, files_doc)
+    return fields
 
 
 def authorize():
@@ -72,7 +74,15 @@ def authorize():
     return creds
 
 
-def list_files(results):
+def list_files_with_paging(files, query, page_size, fields, order_by):
+    request = files.list(q=query, pageSize=page_size, fields=fields, orderBy=order_by)
+    while request is not None:
+        files_doc = request.execute()
+        print_files(files_doc)
+        request = files.list_next(request, files_doc)
+
+
+def print_files(results):
     if not results:
         print('No files found.')
     else:

@@ -27,7 +27,12 @@ PORT = 49555
 ORDER_BY = "sharedWithMeTime desc"
 PAGESIZE = 100
 QUERY = "sharedWithMe"
-FIELDS = ["id", "name", "mimeType", "webViewLink", "createdTime", "modifiedTime", "sharedWithMeTime", "sharingUser", "owners"]
+ALL_FIELDS_WITH_DISPLAY_NAME = [("id", "ID"), ("name", "Name"), ("mimeType", "Type"), ("webViewLink", "Link"),
+                                ("createdTime", "Created date"), ("modifiedTime", "Last modified time"),
+                                ("sharedWithMeTime", "Shared with me date"),
+                                ("sharingUser", "Sharing user"), ("owners", "Owner")]
+GOOGLE_API_FIELDS = [tup[0] for tup in ALL_FIELDS_WITH_DISPLAY_NAME]
+FIELD_DISPLAY_NAMES = [tup[1] for tup in ALL_FIELDS_WITH_DISPLAY_NAME]
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
 
@@ -46,7 +51,7 @@ def main():
 
 def get_field_names():
     # File fields are documented here: https://developers.google.com/drive/api/v3/reference/files#resource
-    fields_str = ", ".join(FIELDS)
+    fields_str = ", ".join(GOOGLE_API_FIELDS)
     file_fields = "files(" + fields_str + ")"
     fields = "nextPageToken, " + file_fields
     return fields

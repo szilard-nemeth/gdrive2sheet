@@ -5,6 +5,8 @@ import sys
 import datetime
 import logging
 import os
+
+from drive_api_wrapper import DriveApiWrapper, DriveApiFileFields
 from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
 import datetime
@@ -97,7 +99,7 @@ class Setup:
                             args.gsheet_worksheet is None):
             parser.error("--gsheet requires --gsheet-client-secret, --gsheet-spreadsheet and --gsheet-worksheet.")
 
-        if args.issues and len(args.issues) > 0:
+        if args.do_print:
             print("Using operation mode: print")
             args.operation_mode = OperationMode.PRINT
         elif args.gsheet:
@@ -112,13 +114,19 @@ class Setup:
         return args
 
 
-
 class Gdrive2Sheet:
     def __init__(self, args):
         self.setup_dirs()
         self.operation_mode = args.operation_mode
+        self.validate_operation_mode()
+
         if self.operation_mode == OperationMode.GSHEET:
             self.gsheet_wrapper = GSheetWrapper(args.gsheet_options)
+
+        self.drive_wrapper = DriveApiWrapper()
+        self.headers = DriveApiFileFields.PRINTABLE_FIELD_DISPLAY_NAMES
+        self.file_fields = DriveApiFileFields.GOOGLE_API_FIELDS_COMMA_SEPARATED
+        self.data = None
 
     def validate_operation_mode(self):
         if self.operation_mode == OperationMode.PRINT:
@@ -140,29 +148,31 @@ class Gdrive2Sheet:
         FileUtils.ensure_dir_created(self.log_dir)
 
     def sync(self):
-        self.validate_operation_mode()
-        # TODO call list_shared_files here
+        self.data = self.drive_wrapper.get_shared_files(fields=self.file_fields)
+        #TODO debug log data here
         self.print_results_table()
         if gdrive2sheet.operation_mode == OperationMode.GSHEET:
             LOG.info("Updating Google sheet with results...")
             self.update_gsheet()
 
     def print_results_table(self):
-        data, headers = self.convert_data_for_result_printer()
-        result_printer = ResultPrinter(data, headers)
+        if not self.data:
+            raise ValueError("Data is not yet set, please call sync method first!")
+        data = self.convert_data_to_rows()
+        result_printer = ResultPrinter(data, self.headers)
         result_printer.print_table()
 
     def update_gsheet(self):
-        update_date_str = datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        # TODO update gsheet with values here
+        data = self.convert_data_to_rows()
+        self.gsheet_wrapper.write_data(self.headers, data)
 
-    def convert_data_for_result_printer(self):
+    def convert_data_to_rows(self):
         data = []
-        #TODO specify headers here
-        headers = []
-        #TODO convert data here
+        for f in self.data:
+            owners = ",".join([o.name for o in f.owners])
+            data.append([str(f.name), str(f.link), str(f.shared_with_me_date), owners, str(f.mime_type)])
 
-        return data, headers
+        return data
 
 
 if __name__ == '__main__':

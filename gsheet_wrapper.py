@@ -38,12 +38,22 @@ class GSheetWrapper:
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(options.client_secret, SCOPE)
         self.client = gspread.authorize(self.creds)
 
-    def write_data(self):
+    def write_data(self, header, data):
         try:
-            sheet = self.client.open(self.options.spreadsheet).worksheet(self.options.worksheet)
+            sheet = self.client.open(self.options.spreadsheet)
+            worksheet = sheet.worksheet(self.options.worksheet)
         except SpreadsheetNotFound:
             raise ValueError("Spreadsheet was not found with name '{}'".format(self.options.spreadsheet))
         except WorksheetNotFound:
             raise ValueError("Worksheet was not found with name '{}'".format(self.options.worksheet))
 
-        # TODO write data to sheet here
+        all_values = [header]
+        all_values.extend(data)
+        sheet.values_update(
+            'Sheet1!A1',
+            params={'valueInputOption': 'RAW'},
+            body={'values': all_values}
+        )
+
+        # for d in data:
+        #     sheet.append_row(d)

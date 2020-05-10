@@ -47,8 +47,8 @@ If --gsheet is specified, a number of other Google Sheet specific arguments are 
   * --gsheet-worksheet: The name of the worksheet from the spreadsheet (document).
   
 ```
-python ./gdrive2sheet.py --gsheet -v \
+python ./gdrive2sheet/gdrive2sheet.py --gsheet -v \
 --gsheet-client-secret "/Users/szilardnemeth/.secret/client_secret_hadoopreviewsync.json" \ 
 --gsheet-spreadsheet "Documents shared with me in Google Drive"
---gsheet-worksheet "Sheet 1"
+--gsheet-worksheet "Sheet1"
 ```

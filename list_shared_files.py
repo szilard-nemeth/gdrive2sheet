@@ -15,7 +15,7 @@
 # [START drive_quickstart]
 from __future__ import print_function
 
-from drive_api_wrapper import DriveApiWrapper, DriveApiFileFields
+from gdrive2sheet.drive_api_wrapper import DriveApiWrapper
 
 
 def main():

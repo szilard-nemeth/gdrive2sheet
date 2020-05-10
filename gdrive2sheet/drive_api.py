@@ -63,8 +63,10 @@ class DriveApiFile(dict):
 class DriveApiUser(dict):
     def __init__(self, owner_dict):
         super(DriveApiUser, self).__init__()
-        email = owner_dict[DriveApiUserFields.EMAIL_ADDRESS] if DriveApiUserFields.EMAIL_ADDRESS in owner_dict else DriveApiUserFields.UNKNOWN_USER
-        name = owner_dict[DriveApiUserFields.DISPLAY_NAME] if DriveApiUserFields.DISPLAY_NAME in owner_dict else DriveApiUserFields.UNKNOWN_USER
+        email = owner_dict[DriveApiUserFields.EMAIL_ADDRESS] if DriveApiUserFields.EMAIL_ADDRESS in owner_dict \
+            else DriveApiUserFields.UNKNOWN_USER
+        name = owner_dict[DriveApiUserFields.DISPLAY_NAME] if DriveApiUserFields.DISPLAY_NAME in owner_dict \
+            else DriveApiUserFields.UNKNOWN_USER
         self.email = email
         self.name = StringUtils.replace_special_chars(name)
 

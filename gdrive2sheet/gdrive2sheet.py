@@ -11,10 +11,9 @@ from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
 import datetime
 import time
-from result_printer import ResultPrinter
 from logging.handlers import TimedRotatingFileHandler
 
-from file_utils import FileUtils
+from gdrive2sheet.utils import FileUtils, ResultPrinter
 
 LOG = logging.getLogger(__name__)
 

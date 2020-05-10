@@ -8,26 +8,32 @@ from utils import StringUtils, auto_str
 
 class DriveApiFileFields:
     F_OWNER = "owners"
-    F_SHARING_USER = "sharingUser"
-    F_SHARED_WITH_ME_TIME = "sharedWithMeTime"
-    F_MODIFIED_TIME = "modifiedTime"
-    F_CREATED_TIME = "createdTime"
-    F_LINK = "webViewLink"
-    F_MIMETYPE = "mimeType"
-    F_NAME = "name"
-    F_ID = "id"
+    SHARING_USER = "sharingUser"
+    SHARED_WITH_ME_TIME = "sharedWithMeTime"
+    MODIFIED_TIME = "modifiedTime"
+    CREATED_TIME = "createdTime"
+    LINK = "webViewLink"
+    MIMETYPE = "mimeType"
+    NAME = "name"
+    ID = "id"
 
-    _ALL_FIELDS_WITH_DISPLAY_NAME = [(F_ID, "ID"), (F_NAME, "Name"), (F_MIMETYPE, "Type"), (F_LINK, "Link"),
-                                     (F_CREATED_TIME, "Created date"), (F_MODIFIED_TIME, "Last modified time"),
-                                     (F_SHARED_WITH_ME_TIME, "Shared with me date"), (F_OWNER, "Owner")]
+    _ALL_FIELDS_WITH_DISPLAY_NAME = [(ID, "ID"), (NAME, "Name"), (MIMETYPE, "Type"), (LINK, "Link"),
+                                     (CREATED_TIME, "Created date"), (MODIFIED_TIME, "Last modified time"),
+                                     (SHARED_WITH_ME_TIME, "Shared with me date"), (F_OWNER, "Owner")]
 
     PRINTABLE_FIELD_DISPLAY_NAMES = ["Name", "Link", "Shared with me date", "Owner", "Type"]
     # FIELDS_TO_PRINT = [tup[0] for tup in FIELDS_TO_PRINT]
 
-    BASIC_FIELDS_COMMA_SEPARATED = ", ".join([F_ID, F_NAME])
+    BASIC_FIELDS_COMMA_SEPARATED = ", ".join([ID, NAME])
     GOOGLE_API_FIELDS = [tup[0] for tup in _ALL_FIELDS_WITH_DISPLAY_NAME]
     GOOGLE_API_FIELDS_COMMA_SEPARATED = ", ".join(GOOGLE_API_FIELDS)
     FIELD_DISPLAY_NAMES = [tup[1] for tup in _ALL_FIELDS_WITH_DISPLAY_NAME]
+
+
+class DriveApiUserFields:
+    UNKNOWN_USER = 'unknown'
+    EMAIL_ADDRESS = 'emailAddress'
+    DISPLAY_NAME = 'displayName'
 
 
 class DriveApiGenericFields:
@@ -57,8 +63,8 @@ class DriveApiFile(dict):
 class DriveApiUser(dict):
     def __init__(self, owner_dict):
         super(DriveApiUser, self).__init__()
-        email = owner_dict['emailAddress'] if 'emailAddress' in owner_dict else 'unknown'
-        name = owner_dict['displayName'] if 'displayName' in owner_dict else 'unknown'
+        email = owner_dict[DriveApiUserFields.EMAIL_ADDRESS] if DriveApiUserFields.EMAIL_ADDRESS in owner_dict else DriveApiUserFields.UNKNOWN_USER
+        name = owner_dict[DriveApiUserFields.DISPLAY_NAME] if DriveApiUserFields.DISPLAY_NAME in owner_dict else DriveApiUserFields.UNKNOWN_USER
         self.email = email
         self.name = StringUtils.replace_special_chars(name)
 
@@ -119,22 +125,23 @@ class DriveApiWrapper:
         list_of_owners_dicts = item['owners']
         owners = [DriveApiUser(owner_dict) for owner_dict in list_of_owners_dicts]
 
-        unknown_user = {'emailAddress': 'unknown', 'displayName': 'unknown'}
-        sharing_user_dict = item[DriveApiFileFields.F_SHARING_USER] if DriveApiFileFields.F_SHARING_USER in item else unknown_user
+        unknown_user = {DriveApiUserFields.EMAIL_ADDRESS: DriveApiUserFields.UNKNOWN_USER,
+                        DriveApiUserFields.DISPLAY_NAME: DriveApiUserFields.UNKNOWN_USER}
+        sharing_user_dict = item[DriveApiFileFields.SHARING_USER] if DriveApiFileFields.SHARING_USER in item else unknown_user
         sharing_user = DriveApiUser(sharing_user_dict)
 
-        return DriveApiFile(item[DriveApiFileFields.F_ID],
-                            item[DriveApiFileFields.F_NAME],
-                            item[DriveApiFileFields.F_LINK],
-                            item[DriveApiFileFields.F_CREATED_TIME],
-                            item[DriveApiFileFields.F_MODIFIED_TIME],
-                            item[DriveApiFileFields.F_SHARED_WITH_ME_TIME],
-                            item[DriveApiFileFields.F_MIMETYPE], owners, sharing_user)
+        return DriveApiFile(item[DriveApiFileFields.ID],
+                            item[DriveApiFileFields.NAME],
+                            item[DriveApiFileFields.LINK],
+                            item[DriveApiFileFields.CREATED_TIME],
+                            item[DriveApiFileFields.MODIFIED_TIME],
+                            item[DriveApiFileFields.SHARED_WITH_ME_TIME],
+                            item[DriveApiFileFields.MIMETYPE], owners, sharing_user)
 
     @staticmethod
     def print_files(items):
         for item in items:
-            print(u'{0} ({1})'.format(item[DriveApiFileFields.F_NAME], item[DriveApiFileFields.F_ID]))
+            print(u'{0} ({1})'.format(item[DriveApiFileFields.NAME], item[DriveApiFileFields.ID]))
 
 
 class DriveAuthorizer:

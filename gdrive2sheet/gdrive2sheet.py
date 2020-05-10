@@ -6,7 +6,7 @@ import datetime
 import logging
 import os
 
-from drive_api_wrapper import DriveApiWrapper, DriveApiFileFields
+from drive_api import DriveApiWrapper, DriveApiFileFields
 from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
 import datetime

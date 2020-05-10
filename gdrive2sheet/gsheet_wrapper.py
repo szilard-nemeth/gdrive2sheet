@@ -42,6 +42,7 @@ class GSheetWrapper:
         self.client = gspread.authorize(self.creds)
 
     def write_data(self, header, data):
+        # TODO add new column: Last updated date
         try:
             sheet = self.client.open(self.options.spreadsheet)
             worksheet = sheet.worksheet(self.options.worksheet)

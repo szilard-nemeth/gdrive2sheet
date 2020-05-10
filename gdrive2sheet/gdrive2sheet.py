@@ -41,7 +41,7 @@ class Setup:
         fh.setLevel(logging.DEBUG)
 
         # create console handler with a higher log level
-        ch = logging.StreamHandler()
+        ch = logging.StreamHandler(stream=sys.stdout)
         ch.setLevel(logging.INFO)
         if console_debug:
             ch.setLevel(logging.DEBUG)

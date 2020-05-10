@@ -49,11 +49,19 @@ class GSheetWrapper:
 
         all_values = [header]
         all_values.extend(data)
+
+        sheet_title = sheet.title
+        worksheet_title = worksheet.title
+        range_to_clear = 'A1:Z1000'
+        LOG.info("Clearing all values from sheet '%s', worksheet: '%s', range: '%s'", sheet_title, worksheet_title, range_to_clear)
+        sheet.values_clear(range_to_clear)
+
+        col_letter = chr(ord('a') + len(header) - 1).upper()
+        rows = len(all_values)
+        range_to_update = "A1:{}{}".format(col_letter, rows)
+        LOG.info("Adding values to sheet '%s', worksheet: '%s', range: '%s'", sheet_title, worksheet_title, range_to_update)
         sheet.values_update(
             'Sheet1!A1',
             params={'valueInputOption': 'RAW'},
             body={'values': all_values}
         )
-
-        # for d in data:
-        #     sheet.append_row(d)

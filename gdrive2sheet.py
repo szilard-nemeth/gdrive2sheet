@@ -149,7 +149,7 @@ class Gdrive2Sheet:
 
     def sync(self):
         self.data = self.drive_wrapper.get_shared_files(fields=self.file_fields)
-        #TODO debug log data here
+        # TODO debug log data here
         self.print_results_table()
         if gdrive2sheet.operation_mode == OperationMode.GSHEET:
             LOG.info("Updating Google sheet with results...")

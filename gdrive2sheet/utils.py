@@ -1,10 +1,11 @@
 import errno
+import logging
 import os
 import string
 import unicodedata
 
 from tabulate import tabulate
-
+LOG = logging.getLogger(__name__)
 
 def auto_str(cls):
     def __str__(self):
@@ -22,7 +23,7 @@ class StringUtils:
   @staticmethod
   def replace_special_chars(unistr):
     if not isinstance(unistr, unicode):
-      print("Object expected to be unicode: " + str(unistr))
+      LOG.warning("Object expected to be unicode: " + str(unistr))
       return str(unistr)
     normalized = unicodedata.normalize('NFD', unistr).encode('ascii', 'ignore')
     normalized = normalized.decode('utf-8')
@@ -51,7 +52,7 @@ class ResultPrinter:
         self.headers = headers
 
     def print_table(self):
-        print(tabulate(self.data, self.headers, tablefmt="fancy_grid"))
+        LOG.info("Printing result table: %s", tabulate(self.data, self.headers, tablefmt="fancy_grid"))
 
     def print_table_html(self):
-        print(tabulate(self.data, self.headers, tablefmt="html"))
+        LOG.info("Printing result table: %s", tabulate(self.data, self.headers, tablefmt="html"))

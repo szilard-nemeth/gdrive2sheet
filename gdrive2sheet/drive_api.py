@@ -1,9 +1,11 @@
+import logging
 import pickle
 import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from utils import StringUtils, auto_str
+LOG = logging.getLogger(__name__)
 
 
 class DriveApiFileFields:
@@ -117,7 +119,7 @@ class DriveApiWrapper:
                 items = [DriveApiWrapper._convert_to_drive_file_object(i) for i in items]
                 result_files.extend(items)
             else:
-                print('No files found.')
+                LOG.warning('No files found.')
             request = files_service.list_next(request, files_doc)
 
         return result_files
@@ -143,7 +145,7 @@ class DriveApiWrapper:
     @staticmethod
     def print_files(items):
         for item in items:
-            print(u'{0} ({1})'.format(item[DriveApiFileFields.NAME], item[DriveApiFileFields.ID]))
+            LOG.info(u'{0} ({1})'.format(item[DriveApiFileFields.NAME], item[DriveApiFileFields.ID]))
 
 
 class DriveAuthorizer:

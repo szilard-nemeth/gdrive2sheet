@@ -13,7 +13,7 @@ import datetime
 import time
 from logging.handlers import TimedRotatingFileHandler
 
-from gdrive2sheet.utils import FileUtils, ResultPrinter
+from utils import FileUtils, ResultPrinter
 
 LOG = logging.getLogger(__name__)
 

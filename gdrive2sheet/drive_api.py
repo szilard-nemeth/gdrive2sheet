@@ -8,6 +8,32 @@ from utils import StringUtils, auto_str
 LOG = logging.getLogger(__name__)
 
 
+class DriveApiMimeTypes:
+    #https://stackoverflow.com/questions/4212861/what-is-a-correct-mime-type-for-docx-pptx-etc
+    #https://stackoverflow.com/questions/11894772/google-drive-mime-types-listing
+    MAPPINGS = {
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": "MS Presentation (pptx)",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "MS Word document (docx)",
+        "application/vnd.ms-powerpoint": "MS Presentation (ppt)",
+
+        "application/pdf": "PDF document",
+        "application/x-apple-diskimage": "Apple disk image",
+        "application/zip": "Zip file",
+        "text/plain": "Plain text file",
+        "application/msword": "MS Word document (doc)",
+        
+        "image/jpeg": "JPEG image",
+        "image/gif": "GIF image",
+        "video/mp4": "Video (mp4)",
+
+        "application/vnd.google-apps.spreadsheet": "Google sheet",
+        "application/vnd.google-apps.folder": "Google drive folder",
+        "application/vnd.google-apps.document": "Google doc",
+        "application/vnd.google-apps.form": "Google form",
+        "application/vnd.google-apps.presentation": "Google presentation",
+        "application/vnd.google-apps.map": "Google map",
+    }
+
 class DriveApiFileFields:
     F_OWNER = "owners"
     SHARING_USER = "sharingUser"

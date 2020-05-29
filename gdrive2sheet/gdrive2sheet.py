@@ -6,7 +6,7 @@ import datetime as dt
 import logging
 import os
 
-from drive_api import DriveApiWrapper, DriveApiFileFields
+from drive_api import DriveApiWrapper, DriveApiFileFields, DriveApiMimeTypes
 from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
 import datetime
@@ -194,61 +194,44 @@ class Gdrive2Sheet:
         FileUtils.ensure_dir_created(self.log_dir)
 
     def sync(self):
-        self.data = self.drive_wrapper.get_shared_files(fields=self.file_fields)
-        # TODO debug log data here
-
-        # TODO convert google mime type to readable type
-        # https://stackoverflow.com/questions/11894772/google-drive-mime-types-listing
-        # Possible values are:
-        # application/vnd.google-apps.spreadsheet,
-        # application/vnd.openxmlformats-officedocument.presentationml.presentation,
-        # application/vnd.ms-powerpoint,
-        # image/jpeg,
-        # application/vnd.google-apps.folder,
-        # application/vnd.google-apps.document,
-        # application/vnd.google-apps.form,
-        # image/gif,
-        # application/pdf,
-        # video/mp4,
-        # application/vnd.openxmlformats-officedocument.wordprocessingml.document,
-        # application/vnd.google-apps.presentation,
-        # application/x-apple-diskimage,
-        # application/zip,
-        # application/vnd.google-apps.map,
-        # text/plain,application/msword
+        raw_data_from_api = self.drive_wrapper.get_shared_files(fields=self.file_fields)
+        # TODO debug log raw data here
+        truncate = gdrive2sheet.operation_mode == OperationMode.PRINT
+        self.data = self.convert_data_to_rows(raw_data_from_api, truncate=truncate)
 
         self.print_results_table()
         if gdrive2sheet.operation_mode == OperationMode.GSHEET:
-            LOG.info("Updating Google sheet with results...")
+            LOG.info("Updating Google sheet with data...")
             self.update_gsheet()
 
     def print_results_table(self):
         if not self.data:
             raise ValueError("Data is not yet set, please call sync method first!")
-        data = self.convert_data_to_rows(truncate=True)
-        result_printer = ResultPrinter(data, self.headers)
+        result_printer = ResultPrinter(self.data, self.headers)
         result_printer.print_table()
 
     def update_gsheet(self):
-        data = self.convert_data_to_rows()
-        self.gsheet_wrapper.write_data(self.headers, data)
+        if not self.data:
+            raise ValueError("Data is not yet set, please call sync method first!")
+        self.gsheet_wrapper.write_data(self.headers, self.data)
 
-    def convert_data_to_rows(self, truncate=False):
+    def convert_data_to_rows(self, data, truncate=False):
         TITLE_MAX_LENGTH = 50
         LINK_MAX_LENGTH = 20
-        data = []
+        converted_data = []
         truncate_links = truncate
         truncate_titles = truncate
         truncate_dates = truncate
 
         row_stats = RowStats(["name", "link", "date", "owners", "type"], track_unique=["type"])
-        for f in self.data:
+        for f in data:
             name = str(f.name)
             link = str(f.link)
             date = str(f.shared_with_me_date)
             owners = ",".join([o.name for o in f.owners])
-            type = str(f.mime_type)
-            row_stats.update({"name": name, "link": link, "date": date, "owners": owners, "type": type})
+            mimetype = self._convert_mime_type(str(f.mime_type))
+
+            row_stats.update({"name": name, "link": link, "date": date, "owners": owners, "type": mimetype})
 
             if truncate_titles and len(name) > TITLE_MAX_LENGTH:
                 original_name = name
@@ -269,10 +252,17 @@ class Gdrive2Sheet:
                 LOG.debug("Truncated date: '%s', original value: %s, new value: %s",
                           original_date, original_date, date)
 
-            row = [name, link, date, owners, type]
-            data.append(row)
+            row = [name, link, date, owners, mimetype]
+            converted_data.append(row)
         row_stats.print_stats()
-        return data
+        return converted_data
+
+    def _convert_mime_type(self, mime_type):
+        if mime_type in DriveApiMimeTypes.MAPPINGS:
+            return DriveApiMimeTypes.MAPPINGS[mime_type]
+        else:
+            LOG.warning("MIME type not found among possible values: %s. Using MIME type value as is", mime_type)
+            return mime_type
 
 
 if __name__ == '__main__':

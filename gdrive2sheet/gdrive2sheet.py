@@ -180,7 +180,7 @@ class Gdrive2Sheet:
         elif self.operation_mode == OperationMode.GSHEET:
             LOG.info("Using operation mode: %s", OperationMode.GSHEET)
         else:
-            raise ValueError("Unknown state! Jira fetch mode should be either "
+            raise ValueError("Unknown state! Operation mode should be either "
                              "{} or {} but it is {}"
                              .format(OperationMode.PRINT,
                                      OperationMode.GSHEET,

@@ -6,6 +6,8 @@ import datetime as dt
 import logging
 import os
 
+from pythoncommons.file_utils import FileUtils
+
 from drive_api import DriveApiWrapper, DriveApiFileFields, DriveApiMimeTypes
 from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
@@ -13,7 +15,7 @@ import datetime
 import time
 from logging.handlers import TimedRotatingFileHandler
 
-from utils import FileUtils, ResultPrinter
+from utils import ResultPrinter
 
 LOG = logging.getLogger(__name__)
 

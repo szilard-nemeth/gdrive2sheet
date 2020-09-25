@@ -5,3 +5,4 @@ google-auth-oauthlib
 gspread
 oauth2client
 tabulate
+git+ssh://git@github.com/szilard-nemeth/python-commons.git

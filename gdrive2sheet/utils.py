@@ -1,10 +1,7 @@
-import errno
 import logging
-import os
-import string
-import unicodedata
 
 from tabulate import tabulate
+
 LOG = logging.getLogger(__name__)
 
 class ResultPrinter:

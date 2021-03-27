@@ -7,9 +7,9 @@ import logging
 import os
 
 from pythoncommons.file_utils import FileUtils
+from pythoncommons.google.google_sheet import GSheetOptions, GSheetWrapper
 
 from drive_api import DriveApiWrapper, DriveApiFileFields, DriveApiMimeTypes
-from gsheet_wrapper import GSheetWrapper, GSheetOptions
 from os.path import expanduser
 import datetime
 import time
@@ -20,6 +20,7 @@ from utils import ResultPrinter
 LOG = logging.getLogger(__name__)
 
 __author__ = 'Szilard Nemeth'
+
 
 class OperationMode:
   GSHEET = "GSHEET"

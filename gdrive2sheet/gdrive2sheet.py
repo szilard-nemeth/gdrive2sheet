@@ -20,7 +20,7 @@ from utils import ResultPrinter
 LOG = logging.getLogger(__name__)
 
 __author__ = 'Szilard Nemeth'
-
+PROJECT_NAME = "gdrive2sheet"
 
 class OperationMode:
   GSHEET = "GSHEET"
@@ -29,17 +29,18 @@ class OperationMode:
 
 class Setup:
     @staticmethod
-    def init_logger(log_dir, console_debug=False):
+    def init_logger(log_dir, console_debug=False, postfix=""):
         # get root logger
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
 
         # create file handler which logs even debug messages
-        logfilename = datetime.datetime.now().strftime(
-            'gdrive2sheet-%Y_%m_%d_%H%M%S.log')
+        prefix = f"{PROJECT_NAME}-{postfix}-"
+        logfilename = datetime.datetime.now().strftime(prefix + "%Y_%m_%d_%H%M%S.log")
 
-        fh = TimedRotatingFileHandler(os.path.join(log_dir, logfilename), when='midnight')
-        fh.suffix = '%Y_%m_%d.log'
+        log_file = FileUtils.join_path(log_dir, logfilename)
+        fh = TimedRotatingFileHandler(log_file, when="midnight")
+        fh.suffix = "%Y_%m_%d.log"
         fh.setLevel(logging.DEBUG)
 
         # create console handler with a higher log level
@@ -48,8 +49,7 @@ class Setup:
         if console_debug:
             ch.setLevel(logging.DEBUG)
 
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
         fh.setFormatter(formatter)
         ch.setFormatter(formatter)
         # add the handlers to the logger

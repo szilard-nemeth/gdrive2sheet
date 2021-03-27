@@ -4,6 +4,7 @@ from tabulate import tabulate
 
 LOG = logging.getLogger(__name__)
 
+
 class ResultPrinter:
     def __init__(self, data, headers):
         self.data = data

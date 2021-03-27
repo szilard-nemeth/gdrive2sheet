@@ -5,11 +5,14 @@ import sys
 import datetime as dt
 import logging
 import os
+from enum import Enum
+from typing import List, Dict
 
 from pythoncommons.file_utils import FileUtils
+from pythoncommons.google.google_auth import GoogleApiAuthorizer
 from pythoncommons.google.google_sheet import GSheetOptions, GSheetWrapper
 
-from drive_api import DriveApiWrapper, DriveApiFileFields, DriveApiMimeTypes
+from pythoncommons.google.google_drive import DriveApiWrapper, FileField, DriveApiFile
 from os.path import expanduser
 import datetime
 import time
@@ -22,9 +25,10 @@ LOG = logging.getLogger(__name__)
 __author__ = 'Szilard Nemeth'
 PROJECT_NAME = "gdrive2sheet"
 
-class OperationMode:
-  GSHEET = "GSHEET"
-  PRINT = "PRINT"
+
+class OperationMode(Enum):
+    GSHEET = "GSHEET"
+    PRINT = "PRINT"
 
 
 class Setup:
@@ -101,10 +105,10 @@ class Setup:
             parser.error("--gsheet requires --gsheet-client-secret, --gsheet-spreadsheet and --gsheet-worksheet.")
 
         if args.do_print:
-            print("Using operation mode: print")
+            print(f"Using operation mode: {OperationMode.PRINT.value}")
             args.operation_mode = OperationMode.PRINT
         elif args.gsheet:
-            print("Using operation mode: gsheet")
+            print(f"Using operation mode: {OperationMode.GSHEET.value}")
             args.operation_mode = OperationMode.GSHEET
             args.gsheet_options = GSheetOptions(args.gsheet_client_secret,
                                                 args.gsheet_spreadsheet,
@@ -116,17 +120,15 @@ class Setup:
 
 
 class RowStats:
-    def __init__(self, list_of_fields, track_unique=None):
+    def __init__(self, list_of_fields: List[str], track_unique: List[str] = None):
         self.list_of_fields = list_of_fields
-        self.longest_fields = {}
-        self.unique_values = {}
-        for f in list_of_fields:
-            self.longest_fields[f] = ""
-        self.longest_line = ""
-
         self.track_unique_values = track_unique
         if not self.track_unique_values:
             self.track_unique_values = []
+
+        self.longest_fields: Dict[str, str] = {field: "" for field in list_of_fields}
+        self.unique_values: Dict[str, set] = {}
+        self.longest_line = ""
 
     def update(self, row_dict):
         # Update longest fields dict values if required
@@ -172,9 +174,10 @@ class Gdrive2Sheet:
         if self.operation_mode == OperationMode.GSHEET:
             self.gsheet_wrapper = GSheetWrapper(args.gsheet_options)
 
-        self.drive_wrapper = DriveApiWrapper()
-        self.headers = DriveApiFileFields.PRINTABLE_FIELD_DISPLAY_NAMES
-        self.file_fields = DriveApiFileFields.GOOGLE_API_FIELDS_COMMA_SEPARATED
+        self.authorizer = GoogleApiAuthorizer()
+        self.drive_wrapper = DriveApiWrapper(self.authorizer)
+        self.headers = FileField.PRINTABLE_FIELD_DISPLAY_NAMES
+        self.file_fields = FileField.GOOGLE_API_FIELDS_COMMA_SEPARATED
         self.data = None
 
     def validate_operation_mode(self):
@@ -197,10 +200,10 @@ class Gdrive2Sheet:
         FileUtils.ensure_dir_created(self.log_dir)
 
     def sync(self):
-        raw_data_from_api = self.drive_wrapper.get_shared_files(fields=self.file_fields)
+        drive_api_file_list: List[DriveApiFile] = self.drive_wrapper.get_shared_files(fields=self.file_fields)
         # TODO debug log raw data here
         truncate = gdrive2sheet.operation_mode == OperationMode.PRINT
-        self.data = self.convert_data_to_rows(raw_data_from_api, truncate=truncate)
+        self.data: List[List[str]] = DataConverter.convert_data_to_rows(drive_api_file_list, truncate=truncate)
 
         self.print_results_table()
         if gdrive2sheet.operation_mode == OperationMode.GSHEET:
@@ -218,54 +221,59 @@ class Gdrive2Sheet:
             raise ValueError("Data is not yet set, please call sync method first!")
         self.gsheet_wrapper.write_data(self.headers, self.data)
 
-    def convert_data_to_rows(self, data, truncate=False):
-        TITLE_MAX_LENGTH = 50
-        LINK_MAX_LENGTH = 20
-        converted_data = []
-        truncate_links = truncate
-        truncate_titles = truncate
-        truncate_dates = truncate
 
-        row_stats = RowStats(["name", "link", "date", "owners", "type"], track_unique=["type"])
-        for f in data:
-            name = str(f.name)
-            link = str(f.link)
-            date = str(f.shared_with_me_date)
-            owners = ",".join([o.name for o in f.owners])
-            mimetype = self._convert_mime_type(str(f.mime_type))
+class DataConverter:
+    TITLE_MAX_LENGTH = 50
+    LINK_MAX_LENGTH = 20
 
+    @staticmethod
+    def convert_data_to_rows(drive_api_file_list, truncate: bool = False) -> List[List[str]]:
+        converted_data: List[List[str]] = []
+        truncate_titles: bool = truncate
+        truncate_links: bool = truncate
+        truncate_dates: bool = truncate
+
+        row_stats: RowStats = RowStats(["name", "link", "date", "owners", "type"], track_unique=["type"])
+        for api_file in drive_api_file_list:
+            name = str(api_file.name)
+            link = str(api_file.link)
+            date = str(api_file.shared_with_me_date)
+            owners = ",".join([o.name for o in api_file.owners])
+            mimetype = DriveApiWrapper.convert_mime_type(str(api_file.mime_type))
             row_stats.update({"name": name, "link": link, "date": date, "owners": owners, "type": mimetype})
 
-            if truncate_titles and len(name) > TITLE_MAX_LENGTH:
-                original_name = name
-                name = name[0:TITLE_MAX_LENGTH] + "..."
-                LOG.debug("Truncated title: '%s', original length: %d, new length: %d",
-                          original_name, len(original_name), TITLE_MAX_LENGTH)
-
+            if truncate_titles and len(name) > DataConverter.TITLE_MAX_LENGTH:
+                name = DataConverter._truncate_str(name, DataConverter.TITLE_MAX_LENGTH, "title")
             if truncate_links:
-                original_link = link
-                link = link[0:LINK_MAX_LENGTH]
-                LOG.debug("Truncated link: '%s', original length: %d, new length: %d",
-                          original_link, len(original_link), LINK_MAX_LENGTH)
-
+                link = DataConverter._truncate_str(link, DataConverter.LINK_MAX_LENGTH, "link")
             if truncate_dates:
-                original_date = date
-                date_obj = dt.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
-                date = date_obj.strftime("%Y-%m-%d")
-                LOG.debug("Truncated date: '%s', original value: %s, new value: %s",
-                          original_date, original_date, date)
+                date = DataConverter._truncate_date(date)
 
-            row = [name, link, date, owners, mimetype]
+            row: List[str] = [name, link, date, owners, mimetype]
             converted_data.append(row)
         row_stats.print_stats()
         return converted_data
 
-    def _convert_mime_type(self, mime_type):
-        if mime_type in DriveApiMimeTypes.MAPPINGS:
-            return DriveApiMimeTypes.MAPPINGS[mime_type]
-        else:
-            LOG.warning("MIME type not found among possible values: %s. Using MIME type value as is", mime_type)
-            return mime_type
+    @staticmethod
+    def _truncate_str(value, max_len, field_name):
+        orig_value = value
+        truncated = value[0:max_len] + "..."
+        LOG.debug(f"Truncated {field_name}: "
+                  f"Original value: '{orig_value}', "
+                  f"Original length: {len(orig_value)}, "
+                  f"New value (truncated): {truncated}, "
+                  f"New length: {max_len}")
+        return truncated
+
+    @staticmethod
+    def _truncate_date(date):
+        original_date = date
+        date_obj = dt.datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%fZ')
+        truncated = date_obj.strftime("%Y-%m-%d")
+        LOG.debug(f"Truncated date. "
+                  f"Original value: {original_date},"
+                  f"New value (truncated): {truncated}")
+        return truncated
 
 
 if __name__ == '__main__':

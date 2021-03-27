@@ -6,7 +6,7 @@ This project is able to sync Google drive documents (along with their metadata) 
 
 You need to have python 2.7 and pip installed.
 Run make from the project's root directory, all python dependencies required by the project will be installed.
-
+IMPORTANT NOTE: This project was tested and is compatible with Python 3.8
 
 ## Running the tests
 

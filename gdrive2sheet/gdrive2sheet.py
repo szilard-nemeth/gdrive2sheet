@@ -9,6 +9,7 @@ from enum import Enum
 from typing import List, Dict
 
 from pythoncommons.file_utils import FileUtils
+from pythoncommons.google.common import ServiceType
 from pythoncommons.google.google_auth import GoogleApiAuthorizer
 from pythoncommons.google.google_sheet import GSheetOptions, GSheetWrapper
 
@@ -174,7 +175,7 @@ class Gdrive2Sheet:
         if self.operation_mode == OperationMode.GSHEET:
             self.gsheet_wrapper = GSheetWrapper(args.gsheet_options)
 
-        self.authorizer = GoogleApiAuthorizer()
+        self.authorizer = GoogleApiAuthorizer(ServiceType.DRIVE)
         self.drive_wrapper = DriveApiWrapper(self.authorizer)
         self.headers = FileField.PRINTABLE_FIELD_DISPLAY_NAMES
         self.file_fields = FileField.GOOGLE_API_FIELDS_COMMA_SEPARATED

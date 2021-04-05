@@ -4,6 +4,9 @@ google-auth-oauthlib==0.4.0
 
 gspread
 oauth2client
-tabulate
+tabulate~=0.8.9
 humanize
 git+ssh://git@github.com/szilard-nemeth/python-commons.git
+setuptools~=54.1.2
+httplib2
+uritemplate

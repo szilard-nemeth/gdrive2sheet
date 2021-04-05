@@ -4,21 +4,16 @@ import argparse
 import sys
 import datetime as dt
 import logging
-import os
 from enum import Enum
 from typing import List, Dict
-
 from pythoncommons.file_utils import FileUtils
 from pythoncommons.google.common import ServiceType
 from pythoncommons.google.google_auth import GoogleApiAuthorizer
 from pythoncommons.google.google_sheet import GSheetOptions, GSheetWrapper
-
 from pythoncommons.google.google_drive import DriveApiWrapper, FileField, DriveApiFile
-from os.path import expanduser
-import datetime
 import time
 from logging.handlers import TimedRotatingFileHandler
-
+from pythoncommons.project_utils import ProjectUtils
 from utils import ResultPrinter
 
 LOG = logging.getLogger(__name__)
@@ -40,10 +35,7 @@ class Setup:
         logger.setLevel(logging.DEBUG)
 
         # create file handler which logs even debug messages
-        prefix = f"{PROJECT_NAME}-{postfix}-"
-        logfilename = datetime.datetime.now().strftime(prefix + "%Y_%m_%d_%H%M%S.log")
-
-        log_file = FileUtils.join_path(log_dir, logfilename)
+        log_file = FileUtils.join_path(log_dir, ProjectUtils.get_default_log_file(PROJECT_NAME, postfix=postfix))
         fh = TimedRotatingFileHandler(log_file, when="midnight")
         fh.suffix = "%Y_%m_%d.log"
         fh.setLevel(logging.DEBUG)
@@ -120,6 +112,7 @@ class Setup:
         return args
 
 
+# TODO move to python-commons
 class RowStats:
     def __init__(self, list_of_fields: List[str], track_unique: List[str] = None):
         self.list_of_fields = list_of_fields
@@ -194,11 +187,12 @@ class Gdrive2Sheet:
                                      self.operation_mode))
 
     def setup_dirs(self):
-        home = expanduser("~")
-        self.project_out_root = os.path.join(home, "gdrive2sheet")
-        self.log_dir = os.path.join(self.project_out_root, 'logs')
-        FileUtils.ensure_dir_created(self.project_out_root)
-        FileUtils.ensure_dir_created(self.log_dir)
+        ProjectUtils.get_output_basedir(PROJECT_NAME)
+        ProjectUtils.get_logs_dir()
+
+    @property
+    def get_logs_dir(self):
+        return ProjectUtils.get_logs_dir()
 
     def sync(self):
         drive_api_file_list: List[DriveApiFile] = self.drive_wrapper.get_shared_files(fields=self.file_fields)
@@ -286,7 +280,7 @@ if __name__ == '__main__':
 
     # Initialize logging
     verbose = True if args.verbose else False
-    Setup.init_logger(gdrive2sheet.log_dir, console_debug=verbose)
+    Setup.init_logger(gdrive2sheet.get_logs_dir, console_debug=verbose)
 
     gdrive2sheet.sync()
     end_time = time.time()

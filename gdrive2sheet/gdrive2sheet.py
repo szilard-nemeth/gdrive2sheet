@@ -14,7 +14,7 @@ from pythoncommons.google.google_drive import DriveApiWrapper, FileField, DriveA
 import time
 from logging.handlers import TimedRotatingFileHandler
 from pythoncommons.project_utils import ProjectUtils
-from utils import ResultPrinter
+from pythoncommons.result_printer import BasicResultPrinter
 
 LOG = logging.getLogger(__name__)
 
@@ -208,8 +208,7 @@ class Gdrive2Sheet:
     def print_results_table(self):
         if not self.data:
             raise ValueError("Data is not yet set, please call sync method first!")
-        result_printer = ResultPrinter(self.data, self.headers)
-        result_printer.print_table()
+        BasicResultPrinter.print_table(self.data, self.headers)
 
     def update_gsheet(self):
         if not self.data:

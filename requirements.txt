@@ -6,7 +6,8 @@ gspread
 oauth2client
 tabulate~=0.8.9
 humanize
-git+ssh://git@github.com/szilard-nemeth/python-commons.git
+git+https://github.com/szilard-nemeth/python-commons.git
+git+https://github.com/szilard-nemeth/google-api-wrapper.git
 setuptools~=54.1.2
 httplib2
 uritemplate

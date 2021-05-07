@@ -5,6 +5,7 @@ import sys
 import datetime as dt
 import logging
 from enum import Enum
+from os.path import expanduser
 from typing import List, Dict
 
 from googleapiwrapper.common import ServiceType
@@ -21,6 +22,7 @@ LOG = logging.getLogger(__name__)
 
 __author__ = 'Szilard Nemeth'
 PROJECT_NAME = "gdrive2sheet"
+SECRET_PROJECTS_DIR = FileUtils.join_path(expanduser("~"), ".secret", "projects", "cloudera")
 
 
 class OperationMode(Enum):
@@ -169,7 +171,11 @@ class Gdrive2Sheet:
         if self.operation_mode == OperationMode.GSHEET:
             self.gsheet_wrapper = GSheetWrapper(args.gsheet_options)
 
-        self.authorizer = GoogleApiAuthorizer(ServiceType.DRIVE)
+        self.authorizer = GoogleApiAuthorizer(ServiceType.DRIVE,
+                                              project_name=PROJECT_NAME,
+                                              secret_basedir=SECRET_PROJECTS_DIR,
+                                              account_email="snemeth@cloudera.com"
+                                              )
         self.drive_wrapper = DriveApiWrapper(self.authorizer)
         self.headers = FileField.PRINTABLE_FIELD_DISPLAY_NAMES
         self.file_fields = FileField.GOOGLE_API_FIELDS_COMMA_SEPARATED
@@ -188,7 +194,7 @@ class Gdrive2Sheet:
                                      self.operation_mode))
 
     def setup_dirs(self):
-        ProjectUtils.get_output_basedir(PROJECT_NAME)
+        self.output_basedir = ProjectUtils.get_output_basedir(PROJECT_NAME)
         ProjectUtils.get_logs_dir()
 
     @property
